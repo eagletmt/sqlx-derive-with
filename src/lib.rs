@@ -61,9 +61,21 @@
 /// struct Row(i64, String);
 /// ```
 ///
+/// # Container attributes
+/// ## rename_all
+/// Specify column name conversion.
+///
+/// ```
+/// #[derive(sqlx_with::FromRow)]
+/// #[sqlx_with(db = "sqlx::Sqlite", rename_all = "camelCase")]
+/// struct Row {
+///     foo_bar: i64,   // deserialized from column "fooBar"
+/// }
+/// ```
+///
 /// # Field attributes
 /// ## rename
-/// Configure column name explicitly.
+/// Configure column name explicitly. `rename` takes precedence over `rename_all`.
 ///
 /// ```
 /// #[derive(sqlx_with::FromRow)]
@@ -116,6 +128,24 @@ pub fn derive_sqlx_with(input: proc_macro::TokenStream) -> proc_macro::TokenStre
     }
 }
 
+#[derive(Debug, darling::FromMeta)]
+enum RenameAll {
+    #[darling(rename = "snake_case")]
+    Snake,
+    #[darling(rename = "lowercase")]
+    Lower,
+    #[darling(rename = "UPPERCASE")]
+    Upper,
+    #[darling(rename = "camelCase")]
+    Camel,
+    #[darling(rename = "PascalCase")]
+    Pascal,
+    #[darling(rename = "SCREAMING_SNAKE_CASE")]
+    ScreamingSnake,
+    #[darling(rename = "kebab-case")]
+    Kebab,
+}
+
 #[derive(Debug, darling::FromDeriveInput)]
 #[darling(attributes(sqlx_with), supports(struct_named))]
 struct DeriveInput {
@@ -123,6 +153,7 @@ struct DeriveInput {
     generics: syn::Generics,
     data: darling::ast::Data<(), Field>,
     db: syn::Path,
+    rename_all: Option<RenameAll>,
 }
 
 #[derive(Debug, darling::FromField)]
@@ -142,7 +173,23 @@ fn expand_derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStrea
     let mut struct_expr: syn::ExprStruct = syn::parse_quote!(Self {});
     for field in input.data.take_struct().unwrap().fields {
         let id = field.ident.unwrap();
-        let column_name = field.rename.unwrap_or_else(|| id.to_string());
+        let column_name = if let Some(rename) = field.rename {
+            rename
+        } else if let Some(ref rename_all) = input.rename_all {
+            use heck::*;
+
+            match rename_all {
+                RenameAll::Snake => id.to_string().to_snake_case(),
+                RenameAll::Lower => id.to_string().to_lowercase(),
+                RenameAll::Upper => id.to_string().to_uppercase(),
+                RenameAll::Camel => id.to_string().to_lower_camel_case(),
+                RenameAll::Pascal => id.to_string().to_upper_camel_case(),
+                RenameAll::ScreamingSnake => id.to_string().to_shouty_snake_case(),
+                RenameAll::Kebab => id.to_string().to_kebab_case(),
+            }
+        } else {
+            id.to_string()
+        };
         let column_get_expr: syn::Expr = if let Some(decode) = field.decode {
             syn::parse_quote!(#decode(#column_name, row))
         } else {
