@@ -2,7 +2,7 @@
 Derive `sqlx::FromRow` specific to the given database.
 
 sqlx-with supports `decode` attribute to use custom decoder function to specific columns.
-This feature is not (and maybe unable to) be supported by upstream `sqlx::FromRow`.
+This feature is not (and unable to be, I think) supported by upstream `sqlx::FromRow`.
 
 ## Usage
 ```rust
