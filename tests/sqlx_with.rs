@@ -210,3 +210,29 @@ async fn rename_all_precedence() {
         .unwrap();
     assert_eq!(row.foo_bar, 30);
 }
+
+#[tokio::test]
+async fn flatten() {
+    #[derive(sqlx_with::FromRow)]
+    #[sqlx_with(db = "sqlx::Sqlite")]
+    struct Row {
+        x: i64,
+        #[sqlx_with(flatten)]
+        y: Y,
+    }
+    #[derive(sqlx_with::FromRow)]
+    #[sqlx_with(db = "sqlx::Sqlite")]
+    struct Y {
+        z: i64,
+        w: i64,
+    }
+
+    let mut conn = sqlx::SqliteConnection::connect(":memory:").await.unwrap();
+    let row: Row = sqlx::query_as("select 10 as x, 20 as y, 30 as z, 40 as w")
+        .fetch_one(&mut conn)
+        .await
+        .unwrap();
+    assert_eq!(row.x, 10);
+    assert_eq!(row.y.z, 30);
+    assert_eq!(row.y.w, 40);
+}

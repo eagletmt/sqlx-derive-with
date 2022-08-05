@@ -100,6 +100,24 @@
 /// }
 /// ```
 ///
+/// ## flatten
+///
+/// ```
+/// #[derive(sqlx_with::FromRow)]
+/// #[sqlx_with(db = "sqlx::Sqlite")]
+/// struct Row {
+///     x: i64,
+///     #[sqlx_with(flatten)]
+///     y: Y,
+/// }
+/// #[derive(sqlx_with::FromRow)]
+/// #[sqlx_with(db = "sqlx::Sqlite")]
+/// struct Y {
+///     z: i64,
+///     w: i64,
+/// }
+/// ```
+///
 /// ## decode
 /// Configure custom decode function to specific columns.
 ///
@@ -160,9 +178,11 @@ struct DeriveInput {
 #[darling(attributes(sqlx_with))]
 struct Field {
     ident: Option<syn::Ident>,
+    ty: syn::Type,
     rename: Option<String>,
     default: darling::util::Flag,
     decode: Option<syn::Path>,
+    flatten: darling::util::Flag,
 }
 
 fn expand_derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStream> {
@@ -173,37 +193,42 @@ fn expand_derive(input: syn::DeriveInput) -> syn::Result<proc_macro2::TokenStrea
     let mut struct_expr: syn::ExprStruct = syn::parse_quote!(Self {});
     for field in input.data.take_struct().unwrap().fields {
         let id = field.ident.unwrap();
-        let column_name = if let Some(rename) = field.rename {
-            rename
-        } else if let Some(ref rename_all) = input.rename_all {
-            use heck::*;
+        let column_val_expr: syn::Expr = if field.flatten.is_present() {
+            let ty = field.ty;
+            syn::parse_quote!(#ty::from_row(row)?)
+        } else {
+            let column_name = if let Some(rename) = field.rename {
+                rename
+            } else if let Some(ref rename_all) = input.rename_all {
+                use heck::*;
 
-            match rename_all {
-                RenameAll::Snake => id.to_string().to_snake_case(),
-                RenameAll::Lower => id.to_string().to_lowercase(),
-                RenameAll::Upper => id.to_string().to_uppercase(),
-                RenameAll::Camel => id.to_string().to_lower_camel_case(),
-                RenameAll::Pascal => id.to_string().to_upper_camel_case(),
-                RenameAll::ScreamingSnake => id.to_string().to_shouty_snake_case(),
-                RenameAll::Kebab => id.to_string().to_kebab_case(),
+                match rename_all {
+                    RenameAll::Snake => id.to_string().to_snake_case(),
+                    RenameAll::Lower => id.to_string().to_lowercase(),
+                    RenameAll::Upper => id.to_string().to_uppercase(),
+                    RenameAll::Camel => id.to_string().to_lower_camel_case(),
+                    RenameAll::Pascal => id.to_string().to_upper_camel_case(),
+                    RenameAll::ScreamingSnake => id.to_string().to_shouty_snake_case(),
+                    RenameAll::Kebab => id.to_string().to_kebab_case(),
+                }
+            } else {
+                id.to_string()
+            };
+            let column_get_expr: syn::Expr = if let Some(decode) = field.decode {
+                syn::parse_quote!(#decode(#column_name, row))
+            } else {
+                syn::parse_quote!(row.try_get(#column_name))
+            };
+            if field.default.is_present() {
+                syn::parse_quote! {
+                    match #column_get_expr {
+                        ::std::result::Result::Err(::sqlx::Error::ColumnNotFound(_)) => ::std::result::Result::Ok(::std::default::Default::default()),
+                        val => val,
+                    }?
+                }
+            } else {
+                syn::parse_quote!(#column_get_expr?)
             }
-        } else {
-            id.to_string()
-        };
-        let column_get_expr: syn::Expr = if let Some(decode) = field.decode {
-            syn::parse_quote!(#decode(#column_name, row))
-        } else {
-            syn::parse_quote!(row.try_get(#column_name))
-        };
-        let column_val_expr: syn::Expr = if field.default.is_present() {
-            syn::parse_quote! {
-                match #column_get_expr {
-                    ::std::result::Result::Err(::sqlx::Error::ColumnNotFound(_)) => ::std::result::Result::Ok(::std::default::Default::default()),
-                    val => val,
-                }?
-            }
-        } else {
-            syn::parse_quote!(#column_get_expr?)
         };
         struct_expr
             .fields
