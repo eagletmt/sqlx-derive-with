@@ -1,0 +1,19 @@
+[package]
+name = "sqlx-with"
+version = "0.1.0"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[lib]
+proc-macro = true
+
+[dependencies]
+darling = "0.14"
+proc-macro2 = "1.0.43"
+quote = "1"
+syn = "1.0.99"
+
+[dev-dependencies]
+tokio = { version = "1", features = ["rt-multi-thread", "macros"] }
+sqlx = { version = "0.6", default-features = false, features = ["macros", "runtime-tokio-rustls", "sqlite"] }
