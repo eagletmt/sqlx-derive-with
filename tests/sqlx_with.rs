@@ -2,7 +2,7 @@ use sqlx::Connection as _;
 
 #[tokio::test]
 async fn it_works() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Row {
         x: i64,
@@ -20,7 +20,7 @@ async fn it_works() {
 
 #[tokio::test]
 async fn rename() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Row {
         #[sqlx_with(rename = "z")]
@@ -39,7 +39,7 @@ async fn rename() {
 
 #[tokio::test]
 async fn default() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Row {
         #[sqlx_with(rename = "z", default)]
@@ -58,7 +58,7 @@ async fn default() {
 
 #[tokio::test]
 async fn decode() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Row {
         #[sqlx_with(decode = "split_x")]
@@ -82,7 +82,7 @@ async fn decode() {
 
 #[tokio::test]
 async fn rename_all_snake_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "snake_case")]
     #[allow(non_snake_case)]
     struct Row {
@@ -99,7 +99,7 @@ async fn rename_all_snake_case() {
 
 #[tokio::test]
 async fn rename_all_lower_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "lowercase")]
     #[allow(non_snake_case)]
     struct Row {
@@ -116,7 +116,7 @@ async fn rename_all_lower_case() {
 
 #[tokio::test]
 async fn rename_all_upper_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "UPPERCASE")]
     struct Row {
         foobar: i64,
@@ -132,7 +132,7 @@ async fn rename_all_upper_case() {
 
 #[tokio::test]
 async fn rename_all_camel_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "camelCase")]
     struct Row {
         foo_bar: i64,
@@ -148,7 +148,7 @@ async fn rename_all_camel_case() {
 
 #[tokio::test]
 async fn rename_all_pascal_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "PascalCase")]
     struct Row {
         foo_bar: i64,
@@ -164,7 +164,7 @@ async fn rename_all_pascal_case() {
 
 #[tokio::test]
 async fn rename_all_screaming_snake_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "SCREAMING_SNAKE_CASE")]
     struct Row {
         foo_bar: i64,
@@ -180,7 +180,7 @@ async fn rename_all_screaming_snake_case() {
 
 #[tokio::test]
 async fn rename_all_kebab_case() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "kebab-case")]
     struct Row {
         foo_bar: i64,
@@ -196,7 +196,7 @@ async fn rename_all_kebab_case() {
 
 #[tokio::test]
 async fn rename_all_precedence() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite", rename_all = "kebab-case")]
     struct Row {
         #[sqlx_with(rename = "hi")]
@@ -213,14 +213,14 @@ async fn rename_all_precedence() {
 
 #[tokio::test]
 async fn flatten() {
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Row {
         x: i64,
         #[sqlx_with(flatten)]
         y: Y,
     }
-    #[derive(sqlx_with::FromRow)]
+    #[derive(sqlx_derive_with::FromRow)]
     #[sqlx_with(db = "sqlx::Sqlite")]
     struct Y {
         z: i64,

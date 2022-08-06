@@ -28,13 +28,13 @@
 /// to the derived implementation since it cannot see `row.try_get()` usage from the struct
 /// definition.
 ///
-/// sqlx-with resolves the problem by specifying database.
+/// sqlx-derive-with resolves the problem by specifying database.
 ///
 /// # Usage
 /// Basic usage is similar to `sqlx::FromRow`.
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row {
 ///     x: i64,
@@ -45,18 +45,18 @@
 /// You have to specify `db`.
 ///
 /// ```compile_fail
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// struct Row {
 ///     x: i64,
 ///     y: String,
 /// }
 /// ```
 ///
-/// You cannot use sqlx-with to tuple structs. Use the original `sqlx::FromRow`
+/// You cannot use sqlx-derive-with to tuple structs. Use the original `sqlx::FromRow`
 /// instead.
 ///
 /// ```compile_fail
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row(i64, String);
 /// ```
@@ -66,7 +66,7 @@
 /// Specify column name conversion.
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite", rename_all = "camelCase")]
 /// struct Row {
 ///     foo_bar: i64,   // deserialized from column "fooBar"
@@ -78,7 +78,7 @@
 /// Configure column name explicitly. `rename` takes precedence over `rename_all`.
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row {
 ///     #[sqlx_with(rename = "z")]
@@ -91,7 +91,7 @@
 /// Use `Default::default()` value when the column doesn't exist..
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row {
 ///     #[sqlx_with(default)]
@@ -103,14 +103,14 @@
 /// ## flatten
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row {
 ///     x: i64,
 ///     #[sqlx_with(flatten)]
 ///     y: Y,
 /// }
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Y {
 ///     z: i64,
@@ -122,7 +122,7 @@
 /// Configure custom decode function to specific columns.
 ///
 /// ```
-/// #[derive(sqlx_with::FromRow)]
+/// #[derive(sqlx_derive_with::FromRow)]
 /// #[sqlx_with(db = "sqlx::Sqlite")]
 /// struct Row {
 ///     #[sqlx_with(decode = "split_x")]
